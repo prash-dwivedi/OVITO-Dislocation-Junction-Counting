@@ -1,0 +1,66 @@
+################################################################################################################
+#Dislocation Junction Analysis Script
+#Developed by: Prashant Dwivedi
+#Description: This script is designed to analyze dislocation junctions within a material's dislocation network,
+#             as extracted by OVITO's DislocationAnalysisModifier. It calculates and stores the count of
+#             dislocation nodes categorized by the number of arms (connectors) and identifies physical
+#             dislocation junctions (nodes with 3 or more arms). The results are stored as attributes
+#             within the DataCollection for further analysis or visualization.
+################################################################################################################
+
+from ovito.data import *
+import numpy as np
+
+def modify(frame: int, data: DataCollection):
+    try:
+        # Access the DislocationNetwork from the DataCollection.
+        dislocation_network = data.dislocations
+
+        if dislocation_network is None:
+            raise ValueError("No DislocationNetwork found in the data collection.")
+
+        # Use the find_nodes() method to get a list of all unique nodes (connectors) in the network.
+        nodes = dislocation_network.find_nodes()
+
+        # Initialize a dictionary to count nodes by the number of arms.
+        node_counts_by_arms = {}
+
+        for node in nodes:
+            # Get the number of arms for this node.
+            arm_count = node.arm_count
+
+            # Increment the count for this number of arms.
+            node_counts_by_arms[arm_count] = node_counts_by_arms.get(arm_count, 0) + 1
+
+        # Calculate the total number of physical dislocation junctions (nodes with 3 or more arms).
+        total_physical_junctions = sum(count for arms, count in node_counts_by_arms.items() if arms >= 3)
+
+        # Store the node counts and total physical junctions in data attributes.
+        for arm_count, count in node_counts_by_arms.items():
+            data.attributes[f"Nodes_with_{arm_count}_arms"] = count
+
+        data.attributes["Total_physical_dislocation_junctions"] = total_physical_junctions
+
+    except Exception as e:
+        # If any exception occurs (e.g., DislocationNetwork not found), log the error and set default values.
+        print(f"Error during dislocation analysis: {str(e)}")
+        # Set default values for expected attributes to ensure the script does not crash.
+        data.attributes["Total_physical_dislocation_junctions"] = 0
+        # Assuming you might expect up to a certain number of arms, you can adjust the range as needed.
+        for arm_count in range(1, 8):  # Adjust the range based on your expectations.
+            data.attributes[f"Nodes_with_{arm_count}_arms"] = 0
+
+ ###############################################################################################################
+      #Note:
+            # Explanation of node types based on the number of arms:
+    # - A single connector (1-arm node) represents a dangling line end, occurring when a dislocation
+    #   terminates in another extended crystal defect, such as a grain boundary or free surface.
+    # - A 2-node consists of two interlinked connectors and is part of a dislocation loop or infinite
+    #   periodic dislocation line. This occurs when a dislocation line is closed on itself, i.e., its
+    #   head and tail are connected.
+    # - Nodes with three or more connectors represent physical dislocation junctions, where three or
+    #   more arms with non-zero Burgers vector meet. These junctions are significant interaction points
+    #   within the material's dislocation network.
+
+
+###############################################################################################################
