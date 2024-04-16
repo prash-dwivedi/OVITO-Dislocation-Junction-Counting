@@ -1,0 +1,75 @@
+# =================================================================================================
+# Junction Identification and Counting Script for OVITO
+# =================================================================================================
+#
+# This script is designed to identify and categorize dislocation junctions in a crystal structure,
+# analyzed using the OVITO software. The script categorizes junctions into Binary, Ternary,
+# Quaternary, and Higher Order junctions based on the number of dislocation segments meeting at a point.
+# It then counts the number of each type of junction and prints the counts.
+#
+# Developed by: Prashant Dwivedi
+# Date: 22/09/2023
+# Version: 1.0
+#
+# Usage:
+# 1. Load your crystal structure data into OVITO.
+# 2. Add this script as a Python script modifier.
+# 3. The script will identify, categorize, and count the junctions, printing the results to the console.
+#
+# Dependencies:
+# - OVITO (Open Visualization Tool) software.
+# - NumPy library.
+#####################################################################################################
+
+from ovito.data import *
+import numpy as np
+
+def find_junctions(data):
+    point_to_segments = {}  # Dictionary to hold points and the segments they belong to
+
+    for index, seg in enumerate(data.dislocations.segments):
+        start_point = tuple(seg.points[0])
+        end_point = tuple(seg.points[-1])
+
+        # Store the segments these points belong to
+        if start_point not in point_to_segments:
+            point_to_segments[start_point] = []
+        point_to_segments[start_point].append(index)
+
+        if end_point not in point_to_segments:
+            point_to_segments[end_point] = []
+        point_to_segments[end_point].append(index)
+
+    # Now identify and categorize the junctions
+    binary_junctions = []
+    ternary_junctions = []
+    quaternary_junctions = []
+    higher_order_junctions = []
+
+    for point, segments in point_to_segments.items():
+        if len(segments) == 2:
+            binary_junctions.append((point, segments))
+        elif len(segments) == 3:
+            ternary_junctions.append((point, segments))
+        elif len(segments) == 4:
+            quaternary_junctions.append((point, segments))
+        elif len(segments) > 4:
+            higher_order_junctions.append((point, segments))
+
+    junction_data = {
+        "Binary Junctions": binary_junctions,
+        "Ternary Junctions": ternary_junctions,
+        "Quaternary Junctions": quaternary_junctions,
+        "Higher Order Junctions": higher_order_junctions,
+    }
+
+    return junction_data
+
+def count_junctions(data):
+    for junction_type, junction_list in data.items():
+        junction_count = len(junction_list)
+        print(f"{junction_type}: {junction_count}")
+
+def modify(frame: int, data: DataCollection):
+    junction_data = find_junctions(data)
+    count_junctions(junction_data)
