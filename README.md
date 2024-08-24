@@ -12,6 +12,7 @@ Easy integration as a Python script modifier within OVITO.
 ![junction_final](https://github.com/user-attachments/assets/6da2c7a7-d05e-4e33-98f5-3e4e73cae455)
 
 
+
 Requirements:
 OVITO software
 NumPy library
@@ -26,6 +27,7 @@ Run the script to see the results in the console.
 Citation: If you use this script in your research, please cite the following articles:
 
 https://doi.org/10.1016/j.jnucmat.2024.155289
+
 https://doi.org/10.1016/j.jnucmat.2024.155042
 
 Developed by Prashant Dwivedi.
